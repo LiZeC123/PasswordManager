@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">密码管理器</string>
+    <string name="IconImageDesc">Icon</string>
+    <string name="title_activity_main">MainActivity</string>
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+    <string name="nav_header_title">密码管理器</string>
+    <string name="nav_header_subtitle">夜幕下的守护者</string>
+    <string name="nav_header_desc">Navigation header</string>
+    <string name="action_settings">Settings</string>
+</resources>
