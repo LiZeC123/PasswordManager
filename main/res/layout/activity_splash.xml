@@ -4,6 +4,15 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".Splash">
+    tools:context=".Splash"
+    android:background="@color/colorPrimaryDark">
 
+    <ImageView
+        android:id="@+id/imageView2"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:srcCompat="@drawable/cover"
+        android:scaleType="centerCrop"
+        tools:layout_editor_absoluteX="107dp"
+        tools:layout_editor_absoluteY="148dp" />
 </android.support.constraint.ConstraintLayout>
