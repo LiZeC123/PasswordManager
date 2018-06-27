@@ -2,25 +2,38 @@ package lizec.lizec.tlock;
 
 import android.os.Bundle;
 import android.support.annotation.NonNull;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
-import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.Toast;
+
+import com.github.clans.fab.FloatingActionButton;
 
 import java.io.File;
+import java.io.IOException;
+import java.security.GeneralSecurityException;
 
 import lizec.lizec.tlock.aes.database.AESMap;
+import lizec.lizec.tlock.aes.exception.SameKeyException;
+import lizec.lizec.tlock.base.NoScreenShotActivity;
+import lizec.lizec.tlock.base.PwdAdapter;
 import lizec.lizec.tlock.file.FileHelper;
+import lizec.lizec.tlock.model.PwdInfo;
+import lizec.lizec.tlock.rand.RandomPassword;
 
-public class MainActivity extends AppCompatActivity
+public class MainActivity extends NoScreenShotActivity
         implements NavigationView.OnNavigationItemSelectedListener {
     private AESMap map;
+    private String TAG = "MyLog";
+    private RecyclerView recyclerView;
+    private PwdAdapter adapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -29,20 +42,24 @@ public class MainActivity extends AppCompatActivity
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        FloatingActionButton fab = findViewById(R.id.fab);
-        fab.setOnClickListener(view -> Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                .setAction("Action", null).show());
+        initDrawerLayout(toolbar);
+        initNavigationView();
+        initMap();
+        initRecyclerView();
+        initFabMenu();
+    }
 
+    private void initDrawerLayout(Toolbar toolbar) {
         DrawerLayout drawer = findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
                 this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
         drawer.addDrawerListener(toggle);
         toggle.syncState();
+    }
 
+    private void initNavigationView(){
         NavigationView navigationView = findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
-
-        initMap();
     }
 
     private void initMap(){
@@ -56,6 +73,30 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
+    private void initFabMenu(){
+        FloatingActionButton fabFind = findViewById(R.id.fabItemFind);
+
+        findViewById(R.id.fabItemAdd).setOnClickListener(v -> {
+            RandomPassword rand = new RandomPassword();
+            try {
+                PwdInfo info = new PwdInfo(rand.getOne(5),rand.getOne(5),rand.getOne());
+                map.addPair(info.getAPPName(),info);
+                adapter.addItemAndNotify(info);
+                Log.i(TAG, "initFabMenu: 添加数据成功");
+            } catch (SameKeyException e) {
+                e.printStackTrace();
+            }
+        });
+    }
+
+    private void initRecyclerView() {
+        recyclerView = findViewById(R.id.recyclerView);
+        LinearLayoutManager layoutManager = new LinearLayoutManager(this);
+        recyclerView.setLayoutManager(layoutManager);
+        adapter = new PwdAdapter(map);
+        recyclerView.setAdapter(adapter);
+    }
+
     @Override
     public void onBackPressed() {
         DrawerLayout drawer = findViewById(R.id.drawer_layout);
@@ -63,6 +104,15 @@ public class MainActivity extends AppCompatActivity
             drawer.closeDrawer(GravityCompat.START);
         } else {
             super.onBackPressed();
+        }
+
+        try {
+            File dataFile = new File(getFilesDir(),"pwd.data");
+            FileHelper.write(dataFile,map.encode());
+            Log.i(TAG, "onBackPressed: 数据保存成功");
+        } catch (IOException | GeneralSecurityException e) {
+            Toast.makeText(this,"数据保存失败",Toast.LENGTH_LONG).show();
+            e.printStackTrace();
         }
     }
 

@@ -23,10 +23,8 @@ import com.github.andyken.draggablegridview.DraggableGridView;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.math.BigInteger;
 import java.security.GeneralSecurityException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
@@ -211,16 +209,17 @@ public class LoginActivity extends NoScreenShotActivity {
 
         String pwd = p.toString();
 
-        return hashPassword(pwd,salt,4096,128);
+        return hashPassword(pwd,salt);
     }
 
 
-    private byte[] hashPassword(String password, String salt, int iterations, int len) throws GeneralSecurityException {
+    private byte[] hashPassword(String password, String salt) throws GeneralSecurityException {
         // 即使用SHA1作为散列函数的PBKDF2算法
         // http://www.rfc-editor.org/rfc/rfc2898.txt
         // https://docs.oracle.com/javase/8/docs/technotes/guides/security/StandardNames.html#SecretKeyFactory
+        // 可以通过调节迭代次数和长度来改变运算时间和破解难度
         final String algorithm = "PBKDF2WithHmacSHA1";
-        PBEKeySpec pbeKeySpec = new PBEKeySpec(password.toCharArray(), salt.getBytes(), iterations, len);
+        PBEKeySpec pbeKeySpec = new PBEKeySpec(password.toCharArray(), salt.getBytes(), 4096, 128);
         SecretKeyFactory kFactory=SecretKeyFactory.getInstance(algorithm);
         SecretKey secretKey = kFactory.generateSecret(pbeKeySpec);
         return secretKey.getEncoded();

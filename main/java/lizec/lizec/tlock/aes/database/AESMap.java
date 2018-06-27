@@ -1,6 +1,7 @@
 package lizec.lizec.tlock.aes.database;
 
 import lizec.lizec.tlock.aes.exception.SameKeyException;
+import lizec.lizec.tlock.model.PwdInfo;
 
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
@@ -10,7 +11,6 @@ import java.math.BigInteger;
 import java.security.GeneralSecurityException;
 import java.security.Key;
 import java.security.SecureRandom;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Set;
 
@@ -19,7 +19,7 @@ public class AESMap {
     private static final String CIPHER_ALGORITHM = "AES/CBC/PKCS5Padding";
     private Key key;
     private IvParameterSpec iv;
-    private HashMap<String,String> database;
+    private HashMap<String,PwdInfo> database;
 
     @SuppressWarnings("unchecked")
     public AESMap(byte[] seed, byte[] raw) throws GeneralSecurityException, IOException, ClassNotFoundException {
@@ -33,7 +33,7 @@ public class AESMap {
 
         // 解密数据转化为哈希表
         ObjectInputStream in = new ObjectInputStream(new ByteArrayInputStream(result));
-        database = (HashMap<String, String>) in.readObject();
+        database = (HashMap<String, PwdInfo>) in.readObject();
     }
 
     public AESMap(byte[] seed) throws GeneralSecurityException{
@@ -63,7 +63,7 @@ public class AESMap {
      * @param key 待查询的键
      * @return 键对应的值, 如果指定的键不存在则返回null
      */
-    public String get(String key){
+    public PwdInfo get(String key){
         return database.get(key);
     }
 
@@ -73,7 +73,7 @@ public class AESMap {
      * @param value 待添加记录的值
      * @throws SameKeyException 如果存在同名的键,则抛出此异常
      */
-    public void addPair(String key, String value) throws SameKeyException {
+    public void addPair(String key, PwdInfo value) throws SameKeyException {
         if(database.containsKey(key)){
             throw new SameKeyException("待添加的键已存在");
         }
@@ -88,7 +88,7 @@ public class AESMap {
      * @param value 待更新记录的值
      * @throws lizec.lizec.tlock.aes.exception.NoSuchKeyException 如果表中不存在相应的记录,则抛出此异常
      */
-    public void update(String key, String value) throws lizec.lizec.tlock.aes.exception.NoSuchKeyException {
+    public void update(String key, PwdInfo value) throws lizec.lizec.tlock.aes.exception.NoSuchKeyException {
         if(!database.containsKey(key)){
             throw new lizec.lizec.tlock.aes.exception.NoSuchKeyException("待更新的键不存在");
         }
