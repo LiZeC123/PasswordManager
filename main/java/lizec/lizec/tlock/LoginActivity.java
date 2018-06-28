@@ -16,8 +16,6 @@ import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
-import android.view.MotionEvent;
-import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -27,19 +25,13 @@ import com.github.andyken.draggablegridview.DraggableGridView;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.security.GeneralSecurityException;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
 
-import javax.crypto.SecretKey;
-import javax.crypto.SecretKeyFactory;
-import javax.crypto.spec.PBEKeySpec;
-
 import lizec.lizec.tlock.aes.database.AESMap;
-import lizec.lizec.tlock.base.Screensaver;
-import lizec.lizec.tlock.file.FileHelper;
+import lizec.lizec.tlock.aes.gen.KeyGen;
 import lizec.lizec.tlock.base.NoScreenShotActivity;
+import lizec.lizec.tlock.file.FileHelper;
 
 public class LoginActivity extends NoScreenShotActivity {
     private static final String preferenceName = "info";
@@ -52,22 +44,28 @@ public class LoginActivity extends NoScreenShotActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
         Objects.requireNonNull(getSupportActionBar()).hide();
-        dragView = findViewById(R.id.dragView);
-        findViewById(R.id.btnChoose).setOnClickListener(v -> openAlbum());
-        findViewById(R.id.btnLogin).setOnClickListener(v -> login());
-        initButton();
+        initDragView();
+        init();
     }
 
-    private void initButton() {
+    private void init() {
         Button login = findViewById(R.id.btnLogin);
         TextView hint = findViewById(R.id.txtHint);
         SharedPreferences preferences = getSharedPreferences(preferenceName,MODE_PRIVATE);
         if(!preferences.getBoolean(hasRegisterStr,false)){
             login.setText("注册");
-            hint.setText("请选择2至5张照片作为密码");
+            hint.setText("请选择2至6张照片作为密码");
             ImageView iv = findViewById(R.id.imageView);
             iv.setImageDrawable(getResources().getDrawable(R.drawable.key,null));
         }
+
+        login.setOnClickListener(v -> login());
+        findViewById(R.id.btnChoose).setOnClickListener(v -> openAlbum());
+    }
+
+    private void initDragView(){
+        dragView = findViewById(R.id.dragView);
+        dragView.setOnItemClickListener((parent, view, position, id) -> dragView.removeView(view));
     }
 
     @Override
@@ -100,6 +98,11 @@ public class LoginActivity extends NoScreenShotActivity {
     }
 
     private void openAlbum() {
+        if(!checkNum()){
+            Toast.makeText(this,"最多选择6张图片作为密码", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         if(ContextCompat.checkSelfPermission(LoginActivity.this,
                 Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED){
             ActivityCompat.requestPermissions(LoginActivity.this,
@@ -110,6 +113,10 @@ public class LoginActivity extends NoScreenShotActivity {
             intent.setType("image/*");
             startActivityForResult(intent,CHOOSE_PHOTO);
         }
+    }
+
+    private boolean checkNum(){
+        return dragView.getChildCount() < 6;
     }
 
     private void handleImageOnKitKat(Intent data) {
@@ -166,6 +173,27 @@ public class LoginActivity extends NoScreenShotActivity {
     }
 
     private void login() {
+        ArrayList<byte[]> imageBytes = getImageBytes();
+
+        if(imageBytes.size() < 2 || imageBytes.size() > 6){
+            Toast.makeText(this,"请选择2至6张图片",Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        byte[] pwd = tryGenPwd(imageBytes);
+        if(pwd != null){
+            Intent intent = new Intent(this,MainActivity.class);
+            intent.putExtra("pwd",pwd);
+            startActivity(intent);
+            finish();
+        }
+        else{
+            Toast.makeText(this,"密码无效,请重新输入",Toast.LENGTH_LONG).show();
+        }
+    }
+
+    @NonNull
+    private ArrayList<byte[]> getImageBytes() {
         ArrayList<byte[]> imageBytes = new ArrayList<>(3);
         int count = dragView.getChildCount();
         for(int i=0;i<count;i++) {
@@ -178,10 +206,13 @@ public class LoginActivity extends NoScreenShotActivity {
             bitmap.compress(Bitmap.CompressFormat.PNG, 100, baos);
             imageBytes.add(baos.toByteArray());
         }
+        return imageBytes;
+    }
 
+    private byte[] tryGenPwd(ArrayList<byte[]> imageBytes) {
         try{
             File dataFile = new File(getFilesDir(),"pwd.data");
-            byte[] pwd = genPassword(imageBytes);
+            byte[] pwd = KeyGen.genPassword(imageBytes);
             SharedPreferences preferences = getSharedPreferences(preferenceName,MODE_PRIVATE);
             if(preferences.getBoolean(hasRegisterStr,false)){
                 // 尝试读取数据, 如果没有异常就说明密码和数据文件正确
@@ -197,50 +228,10 @@ public class LoginActivity extends NoScreenShotActivity {
                 editor.putBoolean(hasRegisterStr,true);
                 editor.apply();
             }
-
-            Intent intent = new Intent(this,MainActivity.class);
-            intent.putExtra("pwd",pwd);
-            startActivity(intent);
-            finish();
+            return pwd;
         } catch (Exception e){
             e.printStackTrace();
-            Toast.makeText(this,"密码无效,请重新输入",Toast.LENGTH_LONG).show();
+            return null;
         }
-    }
-
-    private byte[] genPassword(List<byte[]> list) throws GeneralSecurityException {
-
-        byte[] b0 = list.get(0);
-        int len0 = b0.length > 1024? 1024:b0.length;
-
-        final String salt = new String(b0,0,len0);
-        //System.out.println(salt);
-        Log.i("Salt", "genPassword: GenSalt");
-
-        int count = list.size();
-        StringBuilder p = new StringBuilder();
-        for(int i=1;i<count;i++){
-            byte[] bytes = list.get(i);
-            int len = bytes.length > 1024? 1024:bytes.length;
-
-            p.append(new String(bytes, 0, len));
-        }
-
-        String pwd = p.toString();
-
-        return hashPassword(pwd,salt);
-    }
-
-
-    private byte[] hashPassword(String password, String salt) throws GeneralSecurityException {
-        // 即使用SHA1作为散列函数的PBKDF2算法
-        // http://www.rfc-editor.org/rfc/rfc2898.txt
-        // https://docs.oracle.com/javase/8/docs/technotes/guides/security/StandardNames.html#SecretKeyFactory
-        // 可以通过调节迭代次数和长度来改变运算时间和破解难度
-        final String algorithm = "PBKDF2WithHmacSHA1";
-        PBEKeySpec pbeKeySpec = new PBEKeySpec(password.toCharArray(), salt.getBytes(), 4096, 128);
-        SecretKeyFactory kFactory=SecretKeyFactory.getInstance(algorithm);
-        SecretKey secretKey = kFactory.generateSecret(pbeKeySpec);
-        return secretKey.getEncoded();
     }
 }
