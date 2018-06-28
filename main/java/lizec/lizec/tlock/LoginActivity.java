@@ -37,6 +37,7 @@ import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 
 import lizec.lizec.tlock.aes.database.AESMap;
+import lizec.lizec.tlock.base.Screensaver;
 import lizec.lizec.tlock.file.FileHelper;
 import lizec.lizec.tlock.base.NoScreenShotActivity;
 
@@ -242,5 +243,4 @@ public class LoginActivity extends NoScreenShotActivity {
         SecretKey secretKey = kFactory.generateSecret(pbeKeySpec);
         return secretKey.getEncoded();
     }
-
 }

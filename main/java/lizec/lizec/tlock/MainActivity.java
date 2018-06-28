@@ -13,9 +13,9 @@ import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.widget.Toast;
 
-import com.github.clans.fab.FloatingActionButton;
 import com.github.clans.fab.FloatingActionMenu;
 
 import java.io.File;
@@ -26,17 +26,18 @@ import lizec.lizec.tlock.aes.database.AESMap;
 import lizec.lizec.tlock.aes.exception.SameKeyException;
 import lizec.lizec.tlock.base.NoScreenShotActivity;
 import lizec.lizec.tlock.base.PwdAdapter;
+import lizec.lizec.tlock.base.Screensaver;
 import lizec.lizec.tlock.file.FileHelper;
 import lizec.lizec.tlock.model.PwdInfo;
-import lizec.lizec.tlock.rand.RandomPassword;
 
 public class MainActivity extends NoScreenShotActivity
-        implements NavigationView.OnNavigationItemSelectedListener {
+        implements NavigationView.OnNavigationItemSelectedListener, Screensaver.OnTimeOutListener{
     private static final int ADD_NEW_INFO = 1;
     private AESMap map;
     private String TAG = "MyLog";
     private RecyclerView recyclerView;
     private PwdAdapter adapter;
+    Screensaver mScreensaver;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,11 +46,18 @@ public class MainActivity extends NoScreenShotActivity
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
+        initTime();
         initDrawerLayout(toolbar);
         initNavigationView();
         initMap();
         initRecyclerView();
         initFabMenu();
+    }
+
+    private void initTime(){
+        mScreensaver = new Screensaver(5000);
+        mScreensaver.setOnTimeOutListener(this);
+        mScreensaver.start();
     }
 
     private void initDrawerLayout(Toolbar toolbar) {
@@ -183,5 +191,19 @@ public class MainActivity extends NoScreenShotActivity
                 Toast.makeText(this,"添加的应用名相同",Toast.LENGTH_LONG).show();
             }
         }
+    }
+
+    @Override
+    public boolean dispatchTouchEvent(MotionEvent ev) {
+        mScreensaver.resetTime();
+        return super.dispatchTouchEvent(ev);
+    }
+
+    @Override
+    public void onTimeOut(Screensaver screensaver) {
+        mScreensaver.stop();
+        Intent intent = new Intent(this,LoginActivity.class);
+        startActivity(intent);
+        finish();
     }
 }
