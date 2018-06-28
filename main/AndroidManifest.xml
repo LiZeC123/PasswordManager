@@ -18,11 +18,10 @@
             android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity
-            android:name=".register.ChoosePwdType" />
         <activity
             android:name=".LoginActivity"
             android:screenOrientation="portrait" />
@@ -31,11 +30,14 @@
             android:label="@string/title_activity_main"
             android:screenOrientation="portrait"
             android:theme="@style/AppTheme.NoActionBar" />
-        <activity
-            android:name=".BackUpActivity" />
+        <activity android:name=".BackUpActivity" />
         <activity
             android:name=".AddPwdActivity"
-            android:screenOrientation="portrait"/>
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".SettingsActivity"
+            android:screenOrientation="portrait"
+            android:label="@string/title_activity_settings"/>
     </application>
 
 </manifest>
