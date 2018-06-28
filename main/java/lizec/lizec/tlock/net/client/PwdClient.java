@@ -1,6 +1,7 @@
 package lizec.lizec.tlock.net.client;
 
 import lizec.lizec.tlock.file.FileHelper;
+import lizec.lizec.tlock.net.command.OnExitListener;
 
 import java.io.File;
 import java.io.IOException;
@@ -17,6 +18,8 @@ public class PwdClient {
     private ObjectInputStream in;
     private ObjectOutputStream out;
 
+    private OnExitListener exitListener;
+
     public PwdClient(String host,int port) throws IOException {
         socket = new Socket(host,port);
         ioThread = new Thread(ioRunnable);
@@ -27,6 +30,21 @@ public class PwdClient {
 
     public void setSendFile(File file){
         dataFile = file;
+    }
+
+    public void setOnExitListerner(OnExitListener l){
+        exitListener = l;
+    }
+
+
+    /**
+     * 结束socket通信并尝试结束通信线程
+     * 通过此函数可以安全的结束两端的通信线程
+     * @throws IOException 如果传输过程中发生错误,抛出此异常
+     */
+    public void sendExit() throws IOException {
+        out.writeUTF("exit");
+        out.flush();
     }
 
     private void initHashMap() {
@@ -47,6 +65,11 @@ public class PwdClient {
                 }
             } catch (IOException e) {
                 e.printStackTrace();
+            }
+
+            // IO线程执行结束， 回调结束事件监听器
+            if(exitListener != null){
+                exitListener.onExit();
             }
         }
     };
