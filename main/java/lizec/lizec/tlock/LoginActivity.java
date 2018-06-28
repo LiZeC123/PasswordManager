@@ -16,7 +16,11 @@ import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
+import android.view.MotionEvent;
+import android.view.View;
+import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.github.andyken.draggablegridview.DraggableGridView;
@@ -50,6 +54,19 @@ public class LoginActivity extends NoScreenShotActivity {
         dragView = findViewById(R.id.dragView);
         findViewById(R.id.btnChoose).setOnClickListener(v -> openAlbum());
         findViewById(R.id.btnLogin).setOnClickListener(v -> login());
+        initButton();
+    }
+
+    private void initButton() {
+        Button login = findViewById(R.id.btnLogin);
+        TextView hint = findViewById(R.id.txtHint);
+        SharedPreferences preferences = getSharedPreferences(preferenceName,MODE_PRIVATE);
+        if(!preferences.getBoolean(hasRegisterStr,false)){
+            login.setText("注册");
+            hint.setText("请选择2至5张照片作为密码");
+            ImageView iv = findViewById(R.id.imageView);
+            iv.setImageDrawable(getResources().getDrawable(R.drawable.key,null));
+        }
     }
 
     @Override
@@ -183,6 +200,7 @@ public class LoginActivity extends NoScreenShotActivity {
             Intent intent = new Intent(this,MainActivity.class);
             intent.putExtra("pwd",pwd);
             startActivity(intent);
+            finish();
         } catch (Exception e){
             e.printStackTrace();
             Toast.makeText(this,"密码无效,请重新输入",Toast.LENGTH_LONG).show();

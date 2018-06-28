@@ -12,9 +12,6 @@ import java.util.Objects;
 import lizec.lizec.tlock.register.ChoosePwdType;
 
 public class Splash extends AppCompatActivity {
-    private static final String preferenceName = "info";
-    private static final String hasRegisterStr = "HasRegister";
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -25,15 +22,7 @@ public class Splash extends AppCompatActivity {
     }
 
     Runnable checkRegister = ()->{
-        SharedPreferences preferences = getSharedPreferences(preferenceName,MODE_PRIVATE);
-        boolean hasRegister = preferences.getBoolean(hasRegisterStr,true);
-        Intent intent;
-        if(hasRegister){
-            intent = new Intent(Splash.this,LoginActivity.class);
-        }
-        else{
-            intent = new Intent(Splash.this, ChoosePwdType.class);
-        }
+        Intent intent = new Intent(Splash.this,LoginActivity.class);
         startActivity(intent);
         finish();
     };
