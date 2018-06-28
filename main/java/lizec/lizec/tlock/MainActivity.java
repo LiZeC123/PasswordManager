@@ -16,6 +16,7 @@ import android.view.MenuItem;
 import android.widget.Toast;
 
 import com.github.clans.fab.FloatingActionButton;
+import com.github.clans.fab.FloatingActionMenu;
 
 import java.io.File;
 import java.io.IOException;
@@ -31,6 +32,7 @@ import lizec.lizec.tlock.rand.RandomPassword;
 
 public class MainActivity extends NoScreenShotActivity
         implements NavigationView.OnNavigationItemSelectedListener {
+    private static final int ADD_NEW_INFO = 1;
     private AESMap map;
     private String TAG = "MyLog";
     private RecyclerView recyclerView;
@@ -75,18 +77,17 @@ public class MainActivity extends NoScreenShotActivity
     }
 
     private void initFabMenu(){
-        FloatingActionButton fabFind = findViewById(R.id.fabItemFind);
+        FloatingActionMenu fabMenu = findViewById(R.id.fab);
+
+        findViewById(R.id.fabItemFind).setOnClickListener(v ->{
+            fabMenu.close(true);
+        });
+
 
         findViewById(R.id.fabItemAdd).setOnClickListener(v -> {
-            RandomPassword rand = new RandomPassword();
-            try {
-                PwdInfo info = new PwdInfo(rand.getOne(5),rand.getOne(5),rand.getOne());
-                map.addPair(info.getAPPName(),info);
-                adapter.addItemAndNotify(info);
-                Log.i(TAG, "initFabMenu: 添加数据成功");
-            } catch (SameKeyException e) {
-                e.printStackTrace();
-            }
+            Intent intent = new Intent(MainActivity.this,AddPwdActivity.class);
+            startActivityForResult(intent,ADD_NEW_INFO);
+            fabMenu.close(true);
         });
     }
 
@@ -163,5 +164,24 @@ public class MainActivity extends NoScreenShotActivity
         DrawerLayout drawer = findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
+    }
+
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if(requestCode == ADD_NEW_INFO){
+            String APP = data.getStringExtra("APP");
+            String user = data.getStringExtra("Name");
+            String pwd = data.getStringExtra("Pwd");
+            PwdInfo info = new PwdInfo(APP,user,pwd);
+            try {
+                map.addPair(info.getAPPName(),info);
+                adapter.addItemAndNotify(info);
+                Log.i(TAG, "initFabMenu: 添加数据成功");
+            } catch (SameKeyException e) {
+                Toast.makeText(this,"添加的应用名相同",Toast.LENGTH_LONG).show();
+            }
+        }
     }
 }

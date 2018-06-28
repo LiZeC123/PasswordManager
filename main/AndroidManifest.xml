@@ -29,7 +29,8 @@
             android:label="@string/title_activity_main"
             android:screenOrientation="portrait"
             android:theme="@style/AppTheme.NoActionBar" />
-        <activity android:name=".BackUpActivity"></activity>
+        <activity android:name=".BackUpActivity" />
+        <activity android:name=".AddPwdActivity"></activity>
     </application>
 
 </manifest>
