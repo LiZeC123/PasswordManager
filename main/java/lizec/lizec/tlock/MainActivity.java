@@ -107,7 +107,7 @@ public class MainActivity extends NoScreenShotActivity
         RecyclerView recyclerView = findViewById(R.id.recyclerView);
         LinearLayoutManager layoutManager = new LinearLayoutManager(this);
         recyclerView.setLayoutManager(layoutManager);
-        adapter = new PwdAdapter(map);
+        adapter = new PwdAdapter(map,this);
         recyclerView.setAdapter(adapter);
     }
 
@@ -186,6 +186,7 @@ public class MainActivity extends NoScreenShotActivity
 
     @Override
     public boolean dispatchTouchEvent(MotionEvent ev) {
+        Log.i(TAG, "dispatchTouchEvent: 重置时间");
         mScreensaver.resetTime();
         return super.dispatchTouchEvent(ev);
     }
